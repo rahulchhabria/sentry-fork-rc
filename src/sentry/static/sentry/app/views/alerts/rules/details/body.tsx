@@ -58,7 +58,6 @@ type Props = {
     label: string;
     custom?: boolean;
   };
-  project: Project;
   organization: Organization;
   location: Location;
   theme: Theme;
