@@ -20,7 +20,8 @@ import * as Layout from 'app/components/layouts/thirds';
 import {Panel, PanelBody, PanelFooter} from 'app/components/panels';
 import Placeholder from 'app/components/placeholder';
 import TimeSince from 'app/components/timeSince';
-import {IconCheckmark, IconFire, IconUser, IconWarning} from 'app/icons';
+import Tooltip from 'app/components/tooltip';
+import {IconCheckmark, IconFire, IconInfo, IconUser, IconWarning} from 'app/icons';
 import {t, tct} from 'app/locale';
 import overflowEllipsis from 'app/styles/overflowEllipsis';
 import space from 'app/styles/space';
@@ -57,6 +58,7 @@ type Props = {
     label: string;
     custom?: boolean;
   };
+  project: Project;
   organization: Organization;
   location: Location;
   theme: Theme;
@@ -94,10 +96,23 @@ class DetailsBody extends React.Component<Props> {
       return '';
     }
 
-    const {aggregate, timeWindow} = rule;
+    const {aggregate} = rule;
 
-    return tct(' [metric] over [window]', {
+    return tct('[metric]', {
       metric: aggregate,
+    });
+  }
+
+  getTimeWindow(): React.ReactNode {
+    const {rule} = this.props;
+
+    if (!rule) {
+      return '';
+    }
+
+    const {timeWindow} = rule;
+
+    return tct('[window]', {
       window: <Duration seconds={timeWindow * 60} />,
     });
   }
@@ -406,26 +421,42 @@ class DetailsBody extends React.Component<Props> {
           return initiallyLoaded ? (
             <Layout.Body>
               <Layout.Main>
-                <ChartControls>
-                  <DropdownControl label={timePeriod.label}>
-                    {TIME_OPTIONS.map(({label, value}) => (
-                      <DropdownItem
-                        key={value}
-                        eventKey={value}
-                        onSelect={this.props.handleTimePeriodChange}
-                      >
-                        {label}
-                      </DropdownItem>
-                    ))}
-                  </DropdownControl>
-                  {timePeriod.custom && (
-                    <StyledTimeRange>
-                      <DateTime date={moment.utc(timePeriod.start)} timeAndDate />
-                      {' — '}
-                      <DateTime date={moment.utc(timePeriod.end)} timeAndDate />
-                    </StyledTimeRange>
-                  )}
-                </ChartControls>
+                <HeaderContainer>
+                  <div>
+                    <SidebarHeading noMargin>{t('Display')}</SidebarHeading>
+                    <ChartControls>
+                      <DropdownControl label={timePeriod.label}>
+                        {TIME_OPTIONS.map(({label, value}) => (
+                          <DropdownItem
+                            key={value}
+                            eventKey={value}
+                            onSelect={this.props.handleTimePeriodChange}
+                          >
+                            {label}
+                          </DropdownItem>
+                        ))}
+                      </DropdownControl>
+                      {timePeriod.custom && (
+                        <StyledTimeRange>
+                          <DateTime date={moment.utc(timePeriod.start)} timeAndDate />
+                          {' — '}
+                          <DateTime date={moment.utc(timePeriod.end)} timeAndDate />
+                        </StyledTimeRange>
+                      )}
+                    </ChartControls>
+                  </div>
+                  <div>
+                    <SidebarHeading noMargin>
+                      {t('Time Interval')}
+                      <Tooltip title="This is the time period which the metric is evaluated by.">
+                        <IconInfo size="xs" />
+                      </Tooltip>
+                    </SidebarHeading>
+
+                    <RuleText>{this.getTimeWindow()}</RuleText>
+                  </div>
+                </HeaderContainer>
+
                 <ChartPanel>
                   <PanelBody withPadding>
                     <ChartHeader>
@@ -517,6 +548,11 @@ const DetailWrapper = styled('div')`
   @media (max-width: ${p => p.theme.breakpoints[0]}) {
     flex-direction: column-reverse;
   }
+`;
+
+const HeaderContainer = styled('div')`
+  display: flex;
+  gap: ${space(4)};
 `;
 
 const ActivityWrapper = styled('div')`
