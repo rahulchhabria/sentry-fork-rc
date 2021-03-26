@@ -1,19 +1,15 @@
 import React from 'react';
 import styled from '@emotion/styled';
 
-import Tooltip from 'app/components/tooltip';
-import {t} from 'app/locale';
 import {Organization, Project} from 'app/types';
 import {BuiltinSymbolSource} from 'app/types/debugFiles';
 import {ImageCandidate} from 'app/types/debugImage';
 
-import {INTERNAL_SOURCE} from '../utils';
-
 import Actions from './actions';
 import Features from './features';
+import Information from './information';
 import Processings from './processings';
 import StatusTooltip from './statusTooltip';
-import {getSourceTooltipDescription} from './utils';
 
 type Props = {
   candidate: ImageCandidate;
@@ -32,8 +28,7 @@ function Candidate({
   baseUrl,
   onDelete,
 }: Props) {
-  const {location, download, source_name, source} = candidate;
-  const isInternalSource = source === INTERNAL_SOURCE;
+  const {download} = candidate;
 
   return (
     <React.Fragment>
@@ -42,10 +37,7 @@ function Candidate({
       </Column>
 
       <DebugFileColumn>
-        <Tooltip title={getSourceTooltipDescription(source, builtinSymbolSources)}>
-          <SourceName>{source_name ?? t('Unknown')}</SourceName>
-        </Tooltip>
-        {location && !isInternalSource && <Location>{location}</Location>}
+        <Information candidate={candidate} builtinSymbolSources={builtinSymbolSources} />
       </DebugFileColumn>
 
       <Column>
@@ -63,7 +55,6 @@ function Candidate({
           projectId={projectId}
           organization={organization}
           candidate={candidate}
-          isInternalSource={isInternalSource}
         />
       </Column>
     </React.Fragment>
@@ -81,15 +72,4 @@ const Column = styled('div')`
 const DebugFileColumn = styled(Column)`
   flex-direction: column;
   align-items: flex-start;
-`;
-
-const SourceName = styled('div')`
-  color: ${p => p.theme.textColor};
-  width: 100%;
-  white-space: pre-wrap;
-  word-break: break-all;
-`;
-
-const Location = styled(SourceName)`
-  color: ${p => p.theme.gray300};
 `;

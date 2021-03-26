@@ -28,7 +28,7 @@ function StatusTag({status}: Props) {
       return <Tag type="success">{t('Deleted')}</Tag>;
     }
     case CandidateDownloadStatus.UNAPPLIED: {
-      return <Tag type="highlight">{t('Unapplied')}</Tag>;
+      return <Tag type="warning">{t('Unapplied')}</Tag>;
     }
     default: {
       Sentry.withScope(scope => {

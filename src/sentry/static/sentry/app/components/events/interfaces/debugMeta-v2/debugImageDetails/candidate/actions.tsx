@@ -18,21 +18,13 @@ type Props = {
   organization: Organization;
   baseUrl: string;
   projectId: string;
-  isInternalSource: boolean;
   onDelete: (debugFileId: string) => void;
 };
 
-function Actions({
-  candidate,
-  organization,
-  baseUrl,
-  projectId,
-  isInternalSource,
-  onDelete,
-}: Props) {
+function Actions({candidate, organization, baseUrl, projectId, onDelete}: Props) {
   const {download, location: debugFileId} = candidate;
 
-  if (!debugFileId || isInternalSource) {
+  if (!debugFileId) {
     return <NotAvailable />;
   }
 

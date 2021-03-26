@@ -14,7 +14,7 @@ import NotAvailable from 'app/components/notAvailable';
 import {t} from 'app/locale';
 import space from 'app/styles/space';
 import {Organization, Project} from 'app/types';
-import {BuiltinSymbolSource, DebugFile} from 'app/types/debugFiles';
+import {BuiltinSymbolSource, DebugFile, DebugFileFeature} from 'app/types/debugFiles';
 import {CandidateDownloadStatus, Image, ImageStatus} from 'app/types/debugImage';
 import {Event} from 'app/types/event';
 import {displayReprocessEventAction} from 'app/utils/displayReprocessEventAction';
@@ -164,14 +164,24 @@ class DebugImageDetails extends AsyncComponent<Props, State> {
 
     const unAppliedCandidates = debugFiles
       .filter(debugFile => !candidateLocations.has(debugFile.id))
-      .map(debugFile => ({
-        download: {
-          status: CandidateDownloadStatus.UNAPPLIED,
-        },
-        location: `${INTERNAL_SOURCE_LOCATION}${debugFile.id}`,
-        source: INTERNAL_SOURCE,
-        source_name: t('Sentry'),
-      })) as ImageCandidates;
+      .map(debugFile => {
+        const features = debugFile.data?.features ?? [];
+        return {
+          download: {
+            status: CandidateDownloadStatus.UNAPPLIED,
+            features: {
+              has_sources: features.includes(DebugFileFeature.SOURCES),
+              has_debug_info: features.includes(DebugFileFeature.DEBUG),
+              has_unwind_info: features.includes(DebugFileFeature.UNWIND),
+              has_symbols: features.includes(DebugFileFeature.SYMTAB),
+            },
+          },
+          location: debugFile.id,
+          filename: debugFile.objectName,
+          source: INTERNAL_SOURCE,
+          source_name: t('Sentry'),
+        };
+      }) as ImageCandidates;
 
     // Check for deleted candidates (debug files)
     const debugFileIds = new Set(debugFiles.map(debugFile => debugFile.id));
@@ -274,6 +284,37 @@ class DebugImageDetails extends AsyncComponent<Props, State> {
         </Header>
         <Body>
           <Content>
+            <GeneralInfo>
+              <Label coloredBg>{t('Address Range')}</Label>
+              <Value coloredBg>{imageAddress ?? <NotAvailable />}</Value>
+
+              <Label>{t('Debug ID')}</Label>
+              <Value>{debug_id ?? <NotAvailable />}</Value>
+
+              <Label coloredBg>{t('Debug File')}</Label>
+              <Value coloredBg>{debug_file ?? <NotAvailable />}</Value>
+
+              <Label>{t('Code ID')}</Label>
+              <Value>{code_id ?? <NotAvailable />}</Value>
+
+              <Label coloredBg>{t('Code File')}</Label>
+              <Value coloredBg>{code_file ?? <NotAvailable />}</Value>
+
+              <Label>{t('Architecture')}</Label>
+              <Value>{architecture ?? <NotAvailable />}</Value>
+
+              <Label coloredBg>{t('Processing')}</Label>
+              <Value coloredBg>
+                {unwind_status || debug_status ? (
+                  <Processings
+                    unwind_status={unwind_status}
+                    debug_status={debug_status}
+                  />
+                ) : (
+                  <NotAvailable />
+                )}
+              </Value>
+            </GeneralInfo>
             {haveCandidatesUnappliedDebugFile &&
               displayReprocessEventAction(organization.features, event) &&
               onReprocessEvent && (
@@ -288,37 +329,6 @@ class DebugImageDetails extends AsyncComponent<Props, State> {
                   )}
                 </AlertLink>
               )}
-            <GeneralInfo>
-              <Label>{t('Address Range')}</Label>
-              <Value>{imageAddress ?? <NotAvailable />}</Value>
-
-              <Label coloredBg>{t('Debug ID')}</Label>
-              <Value coloredBg>{debug_id ?? <NotAvailable />}</Value>
-
-              <Label>{t('Debug File')}</Label>
-              <Value>{debug_file ?? <NotAvailable />}</Value>
-
-              <Label coloredBg>{t('Code ID')}</Label>
-              <Value coloredBg>{code_id ?? <NotAvailable />}</Value>
-
-              <Label>{t('Code File')}</Label>
-              <Value>{code_file ?? <NotAvailable />}</Value>
-
-              <Label coloredBg>{t('Architecture')}</Label>
-              <Value coloredBg>{architecture ?? <NotAvailable />}</Value>
-
-              <Label>{t('Processing')}</Label>
-              <Value>
-                {unwind_status || debug_status ? (
-                  <Processings
-                    unwind_status={unwind_status}
-                    debug_status={debug_status}
-                  />
-                ) : (
-                  <NotAvailable />
-                )}
-              </Value>
-            </GeneralInfo>
             <Candidates
               imageStatus={status}
               candidates={candidates}
@@ -347,7 +357,7 @@ class DebugImageDetails extends AsyncComponent<Props, State> {
                 )}
                 to={debugFilesSettingsLink}
               >
-                {t('Open in Settings')}
+                {t('Search this image in settings')}
               </Button>
             )}
           </ButtonBar>
